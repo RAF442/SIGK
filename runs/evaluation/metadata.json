@@ -1,0 +1,140 @@
+{
+  "dataset": "DIV2K",
+  "test_protocol": "public-validation-proxy",
+  "split": "test",
+  "image_count": 100,
+  "full_split": true,
+  "manifest_sha256": "9d61bdfa283e99e4953de36122536a16e4a7c2b52e7a85f0cc99221b92c0e133",
+  "seed": 42,
+  "conditions": [
+    "sr4",
+    "sr8",
+    "dn001",
+    "dn003"
+  ],
+  "checkpoints": {
+    "sr4": {
+      "sha256": "53cbcc4f5f349c7c0bca747e7b40a63350ad2431a8dbbba40637fbba537f3720",
+      "epoch": 29,
+      "architecture": {
+        "width": 24,
+        "blocks": 4
+      },
+      "training_config": {
+        "condition": "sr4",
+        "architecture": {
+          "width": 24,
+          "blocks": 4
+        },
+        "epochs": 30,
+        "batch_size": 8,
+        "lr": 0.001,
+        "loss": "mse",
+        "seed": 42,
+        "repeat": 2,
+        "manifest_sha256": "9d61bdfa283e99e4953de36122536a16e4a7c2b52e7a85f0cc99221b92c0e133"
+      },
+      "validation_PSNR": 24.46773772239685
+    },
+    "sr8": {
+      "sha256": "e41085921c0a8c6895025bacfff00f0c03738114d02119acc492765217ce3190",
+      "epoch": 28,
+      "architecture": {
+        "width": 24,
+        "blocks": 4
+      },
+      "training_config": {
+        "condition": "sr8",
+        "architecture": {
+          "width": 24,
+          "blocks": 4
+        },
+        "epochs": 30,
+        "batch_size": 8,
+        "lr": 0.001,
+        "loss": "mse",
+        "seed": 42,
+        "repeat": 2,
+        "manifest_sha256": "9d61bdfa283e99e4953de36122536a16e4a7c2b52e7a85f0cc99221b92c0e133"
+      },
+      "validation_PSNR": 21.462306690216064
+    },
+    "dn001": {
+      "sha256": "af48fb4b265cd1e79bda4727c5fad9376139452633b14c327d1548c886444dab",
+      "epoch": 30,
+      "architecture": {
+        "width": 24,
+        "blocks": 4
+      },
+      "training_config": {
+        "condition": "dn001",
+        "architecture": {
+          "width": 24,
+          "blocks": 4
+        },
+        "epochs": 30,
+        "batch_size": 8,
+        "lr": 0.001,
+        "loss": "mse",
+        "seed": 42,
+        "repeat": 2,
+        "precision": "bf16",
+        "training_noise": "torch",
+        "manifest_sha256": "9d61bdfa283e99e4953de36122536a16e4a7c2b52e7a85f0cc99221b92c0e133"
+      },
+      "validation_PSNR": 42.65204191207886
+    },
+    "dn003": {
+      "sha256": "81314a2307a28332be8e4e2a19bda5992ce0a0c36288876642213a4d5ace9718",
+      "epoch": 29,
+      "architecture": {
+        "width": 24,
+        "blocks": 4
+      },
+      "training_config": {
+        "condition": "dn003",
+        "architecture": {
+          "width": 24,
+          "blocks": 4
+        },
+        "epochs": 30,
+        "batch_size": 8,
+        "lr": 0.001,
+        "loss": "mse",
+        "seed": 42,
+        "repeat": 2,
+        "precision": "bf16",
+        "training_noise": "torch",
+        "manifest_sha256": "9d61bdfa283e99e4953de36122536a16e4a7c2b52e7a85f0cc99221b92c0e133"
+      },
+      "validation_PSNR": 36.176874446868894
+    }
+  },
+  "lpips_net": "squeeze",
+  "sne_definition": null,
+  "primary_metrics_complete": true,
+  "complete_metrics": false,
+  "bilateral": {
+    "dn001": {
+      "color_factor": 1.0,
+      "spatial": 3.0
+    },
+    "dn003": {
+      "color_factor": 1.0,
+      "spatial": 3.0
+    }
+  },
+  "environment": {
+    "torch": "2.10.0+cu128",
+    "torchvision": "0.25.0+cu128",
+    "numpy": "2.5.4",
+    "Pillow": "12.3.0",
+    "opencv-python-headless": "4.14.0.94",
+    "scikit-image": "0.26.0",
+    "lpips": "0.1.4",
+    "matplotlib": "3.11.2",
+    "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+    "cuda": "12.8"
+  },
+  "metric_protocol": "RGB [0,1]; full 256x256; mean per-image metrics; no border crop"
+}

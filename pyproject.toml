@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sigk-image-restoration"
+version = "1.0.0"
+description = "SIGK: super-resolution i odszumianie obrazów DIV2K"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.6,<3", "torchvision>=0.21,<1", "numpy>=1.26,<3",
+  "Pillow>=10,<13", "opencv-python-headless>=4.9,<5",
+  "scikit-image>=0.23,<1", "lpips==0.1.4", "matplotlib>=3.8,<4"
+]
+
+[project.scripts]
+sigk = "sigk.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sigk*"]

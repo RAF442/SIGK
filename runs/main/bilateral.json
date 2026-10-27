@@ -1,0 +1,15 @@
+{
+  "seed": 42,
+  "split": "val",
+  "parameters": {
+    "dn001": {
+      "color_factor": 1.0,
+      "spatial": 3.0
+    },
+    "dn003": {
+      "color_factor": 1.0,
+      "spatial": 3.0
+    }
+  },
+  "manifest_sha256": "9d61bdfa283e99e4953de36122536a16e4a7c2b52e7a85f0cc99221b92c0e133"
+}

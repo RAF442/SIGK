@@ -1,0 +1,10 @@
+# PyTorch/torchvision: w razie potrzeby najpierw zainstaluj zgodną parę CUDA
+# według https://pytorch.org/get-started/locally/.
+torch>=2.6,<3
+torchvision>=0.21,<1
+numpy>=1.26,<3
+Pillow>=10,<13
+opencv-python-headless>=4.9,<5
+scikit-image>=0.23,<1
+lpips==0.1.4
+matplotlib>=3.8,<4
