@@ -11,7 +11,7 @@ Projekt realizuje **dwa zadania** z dostarczonego PDF w Pythonie i PyTorch:
 
 Kod obejmuje przygotowanie DIV2K, architekturę residualną, trening, wybór checkpointu,
 dobór parametrów bilateral, ewaluację, przetwarzanie własnego obrazu oraz raport
-HTML i Markdown z tabelami, wykresami i obrazami. **Kod i syntetyczna próba działania
+HTML i Markdown z tabelami, wykresami i obrazami. **Kod i testy na sztucznych danych
 nie zastępują eksperymentów na DIV2K**. Wyniki i ograniczenia opisuje [sprawozdanie](docs/sprawozdanie/sprawozdanie.pdf).
 
 Wykonano już pełną serię 4 modeli po 30 epok i ewaluację na 100 publicznych
@@ -51,23 +51,15 @@ działa; `--device auto` automatycznie wybiera dostępne urządzenie.
 Komendy działają też na Linuxie po zastąpieniu `.venv/Scripts/python.exe` przez
 `.venv/bin/python`. Pętle w poniższych przykładach są zapisane dla PowerShell.
 
-## Szybka próba bez DIV2K
+## Testy bez DIV2K
 
 ```powershell
 .venv/Scripts/python.exe -X utf8 -m unittest discover -s tests -v
-.venv/Scripts/python.exe -X utf8 -m src demo-data --data data/demo
-foreach ($condition in @("sr4", "sr8", "dn001", "dn003")) {
-    .venv/Scripts/python.exe -X utf8 -m src train --condition $condition --data data/demo --runs runs/smoke --epochs 2 --repeat 1 --width 8 --blocks 1 --batch-size 2 --device cpu
-    if ($LASTEXITCODE -ne 0) { throw "Trening $condition zakonczony bledem" }
-}
-.venv/Scripts/python.exe -X utf8 -m src evaluate --data data/demo --runs runs/smoke --output runs/smoke-evaluation --examples 2 --device cpu
 ```
 
-Polecenia tworzą 13 obrazów proceduralnych, trenują cztery małe modele po dwie epoki
-i zapisują raport w `runs/smoke-evaluation/raport.html`. Pierwsze użycie LPIPS
-pobiera wagi SqueezeNet (ok. 5 MB). Dodanie `--skip-lpips` do komendy `evaluate`
-pomija ten download i wyraźnie oznacza niekompletne metryki. Potrzebne są puste
-katalogi `data/demo`, `runs/smoke` i `runs/smoke-evaluation`, aby nie nadpisać wcześniejszych prób.
+Testy sprawdzają podział danych, degradacje, metryki, uczenie i zapis modeli.
+Niezbędne małe obrazy tworzą w katalogach tymczasowych i usuwają po zakończeniu.
+Nie wymagają pobierania DIV2K ani wag LPIPS.
 
 ## Pełny eksperyment DIV2K
 

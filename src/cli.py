@@ -30,9 +30,6 @@ def parser():
     d.add_argument("--raw", default="data/raw")
     d.add_argument("--data", default="data/div2k256")
     d.add_argument("--test-dir")
-    d = sub.add_parser("demo-data")
-    d.add_argument("--data", default="data/demo")
-    d.add_argument("--seed", type=int, default=123)
     d = sub.add_parser("verify")
     d.add_argument("--data", default="data/div2k256")
     t = sub.add_parser("train")
@@ -101,9 +98,6 @@ def main():
             from .data import verify_data
             manifest = verify_data(args.data)
             print({k: len(v) for k, v in manifest["splits"].items()})
-        elif args.command == "demo-data":
-            from .demo import make_demo
-            make_demo(args.data, args.seed)
         elif args.command == "report":
             from .report import make_report
             make_report(args.output, args.runs, write_markdown=args.markdown)

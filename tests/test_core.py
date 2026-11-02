@@ -9,13 +9,35 @@ from pathlib import Path
 
 import numpy as np
 
-from src.common import dump_json, image_seed, load_json
+from src.common import dump_json, image_seed, load_json, sha256
 from src.data import extract_archive, official_split
 from src.metrics import errors
 
 HAS_TORCH = importlib.util.find_spec("torch") is not None
 HAS_CV2 = importlib.util.find_spec("cv2") is not None
 HAS_SKIMAGE = importlib.util.find_spec("skimage") is not None
+
+
+def make_test_data(root):
+    """Minimalne obrazy i manifest wyłącznie do testów, tworzone tymczasowo."""
+    from PIL import Image
+
+    root = Path(root)
+    manifest = {"dataset": "UNIT-TEST", "size": 256, "splits": {}}
+    rng = np.random.default_rng(123)
+    for split, count in (("train", 2), ("val", 1), ("test", 1)):
+        folder = root / split
+        folder.mkdir(parents=True)
+        records = []
+        for index in range(count):
+            path = folder / f"{index}.png"
+            pixels = rng.integers(32, 224, size=(256, 256, 3), dtype=np.uint8)
+            Image.fromarray(pixels).save(path)
+            digest = sha256(path)
+            records.append({"file": path.name, "source_sha256": digest,
+                            "prepared_sha256": digest})
+        manifest["splits"][split] = records
+    dump_json(root / "manifest.json", manifest)
 
 
 class ProtocolTests(unittest.TestCase):
@@ -101,12 +123,11 @@ class DegradationTests(unittest.TestCase):
 
     def test_manifest_detects_tampering(self):
         from src.data import verify_data
-        from src.demo import make_demo
         with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp) / "demo"
-            make_demo(root)
+            root = Path(temp) / "data"
+            make_test_data(root)
             manifest = verify_data(root)
-            self.assertEqual(manifest["dataset"], "SYNTHETIC-SMOKE")
+            self.assertEqual(manifest["dataset"], "UNIT-TEST")
             image = next((root / "test").glob("*.png"))
             image.write_bytes(b"modified")
             with self.assertRaises(ValueError):
@@ -152,13 +173,11 @@ class LearningTests(unittest.TestCase):
     def test_finished_run_resume_restores_history(self):
         import torch
         from argparse import Namespace
-        from src.common import sha256
-        from src.demo import make_demo
         from src.engine import train
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             data = root / "data"
-            make_demo(data)
+            make_test_data(data)
             args = Namespace(device="cpu", threads=2, seed=42, data=str(data),
                              runs=str(root / "runs"), condition="dn001", resume=False,
                              width=4, blocks=1, lr=0.001, epochs=1, batch_size=2,
