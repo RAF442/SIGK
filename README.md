@@ -12,11 +12,11 @@ Projekt realizuje **dwa zadania** z dostarczonego PDF w Pythonie i PyTorch:
 Kod obejmuje przygotowanie DIV2K, architekturę residualną, trening, wybór checkpointu,
 dobór parametrów bilateral, ewaluację, przetwarzanie własnego obrazu oraz raport
 HTML i Markdown z tabelami, wykresami i obrazami. **Kod i syntetyczna próba działania
-nie zastępują eksperymentów na DIV2K**. Wyniki i ograniczenia opisuje [docs/WYNIKI.md](docs/WYNIKI.md).
+nie zastępują eksperymentów na DIV2K**. Wyniki i ograniczenia opisuje [sprawozdanie](docs/sprawozdanie/sprawozdanie.pdf).
 
 Wykonano już pełną serię 4 modeli po 30 epok i ewaluację na 100 publicznych
 obrazach validation HR. Rzeczywiste tabele i interpretacja są w
-[docs/WYNIKI.md](docs/WYNIKI.md), a ilustracje w `runs/evaluation/raport.html`.
+[sprawozdaniu](docs/sprawozdanie/sprawozdanie.pdf), a ilustracje w `runs/evaluation/raport.html`.
 SNE zweryfikowano ze slajdem 41 wykładu: jest to suma kwadratów błędów, czyli SSE.
 Kolumnę SNE uzupełniono z wcześniej zapisanych SSE, bez ponownego treningu.
 
@@ -111,7 +111,7 @@ foreach ($condition in @("sr4", "sr8", "dn001", "dn003")) {
 .venv/Scripts/python.exe -X utf8 -m src evaluate --runs runs/reproduction --output runs/reproduction-evaluation --bilateral-config runs/reproduction/bilateral.json
 ```
 
-Dokładne wyniki: [docs/WYNIKI.md](docs/WYNIKI.md). Do wznowienia
+Dokładne wyniki: [sprawozdanie](docs/sprawozdanie/sprawozdanie.pdf). Do wznowienia
 przerwanego wariantu należy użyć jego komendy `train` z `--resume` i identycznymi
 parametrami. Odtworzenie od zera wymaga pustych katalogów `--runs` i `--output`,
 aby zachować istniejące wyniki.
@@ -252,7 +252,7 @@ runs/evaluation/
 ```
 
 Wnioski w raporcie powstają z pomiarów i nie zakładają, że sieć wygrała.
-Więcej o architekturze, planie badań i prezentacji: [docs/PROJEKT.md](docs/PROJEKT.md).
+Więcej o architekturze i przeprowadzonych badaniach: [sprawozdanie](docs/sprawozdanie/sprawozdanie.pdf).
 
 ## Źródła
 
