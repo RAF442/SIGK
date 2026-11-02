@@ -61,13 +61,16 @@ def conclusions(rows):
         if neural.get("LPIPS") is not None and baseline.get("LPIPS") is not None:
             difference = float(neural["LPIPS"]) - float(baseline["LPIPS"])
             text += f" Zmiana LPIPS: {difference:+.5f} (mniej = lepiej)."
+        if neural.get("SNE") is not None and baseline.get("SNE") is not None:
+            difference = float(neural["SNE"]) - float(baseline["SNE"])
+            text += f" Zmiana SNE: {difference:+.5f} (mniej = lepiej)."
         if math.isfinite(delta):
             text += " Nie stwierdzono poprawy PSNR." if delta <= 0 else " Uzyskano poprawę średniego PSNR."
         result.append(text)
     return result
 
 
-def make_report(output, runs="runs/main"):
+def make_report(output, runs="runs/main", write_markdown=False):
     output, runs = Path(output), Path(runs)
     meta = load_json(output / "metadata.json")
     rows = load_json(output / "summary.json")
@@ -84,9 +87,9 @@ def make_report(output, runs="runs/main"):
         warning.append("Pominięto LPIPS; raport nie zawiera kompletu wymaganych metryk.")
     if meta["split"] != "test":
         warning.append(f"Ewaluacja na podziale {meta['split']}; nie jest to wynik testowy.")
-    if not meta["sne_definition"]:
-        warning.append("SNE: brak definicji w PDF. Nie zgadywano wzoru; policzono dodatkowo MSE i SSE. "
-                       "Przed oddaniem należy potwierdzić definicję z wykładu.")
+    if meta.get("sne_definition") != "sse":
+        warning.append("Brak SNE zgodnego z wykładem. Slajd 41 definiuje SNE jako sumę kwadratów "
+                       "błędów (SSE), bez normalizacji. Należy uzupełnić zapisane wyniki.")
     plots = []
     plt = pyplot()
     chart_folder = output / "charts"
@@ -107,8 +110,8 @@ def make_report(output, runs="runs/main"):
             plt.close(fig)
             plots.append(path.relative_to(output).as_posix())
     figures = sorted(p.relative_to(output).as_posix() for p in (output / "images").glob("*.png"))
-    columns = ("condition", "method", "images", "PSNR", "SSIM", "LPIPS", "SNE", "MSE", "SSE")
-    headers = ("Wariant", "Metoda", "N", "PSNR ↑ [dB]", "SSIM ↑", "LPIPS ↓", "SNE*", "MSE ↓", "SSE ↓")
+    columns = ("condition", "method", "images", "PSNR", "SSIM", "LPIPS", "SNE", "MSE")
+    headers = ("Wariant", "Metoda", "N", "PSNR ↑ [dB]", "SSIM ↑", "LPIPS ↓", "SNE ↓ (=SSE)", "MSE ↓")
     table = "<table><thead><tr>" + "".join(f"<th>{h}</th>" for h in headers) + "</tr></thead><tbody>"
     markdown = ["# SIGK - wyniki eksperymentów", "", *[f"> {w}\n" for w in warning],
                 f"Zbiór: {meta['dataset']}; podział: {meta['split']}; N={meta['image_count']}; seed={meta['seed']}.",
@@ -119,7 +122,9 @@ def make_report(output, runs="runs/main"):
         markdown.append("| " + " | ".join(cells) + " |")
     table += "</tbody></table>"
     protocol = (f"{meta['metric_protocol']}. LPIPS: {meta['lpips_net'] or 'pominięto'}. "
-                f"SNE*: {meta['sne_definition'] or 'niezdefiniowane'}. "
+                f"Definicja zapisanych wyników SNE: {meta['sne_definition'] or 'brak'}. "
+                "SNE (Squared Norm Error) = suma (referencja - wynik)^2 po wszystkich pikselach "
+                "i kanałach RGB [0,1], zgodnie ze slajdem 41 wykładu. SNE = SSE = 256*256*3*MSE. "
                 "SSIM: okno Gaussa, sigma=1.5, data_range=1, covariance population. "
                 "Tabele zawierają średnie arytmetyczne metryk liczonych osobno dla każdego obrazu. "
                 "Pełna konfiguracja i wersje bibliotek: metadata.json; wyniki jednostkowe: per_image.csv.")
@@ -180,4 +185,5 @@ def make_report(output, runs="runs/main"):
                  "", *[f"- {t}" for t in training_details], "", baseline_details,
                  "", "## Wnioski", "", *[f"- {c}" for c in comments], "", "## Wizualizacje", ""]
     markdown += [f"![{Path(p).stem}]({p})\n" for p in plots + figures]
-    (output / "raport.md").write_text("\n".join(markdown), encoding="utf-8")
+    if write_markdown:
+        (output / "raport.md").write_text("\n".join(markdown), encoding="utf-8")

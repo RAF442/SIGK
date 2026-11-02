@@ -4,7 +4,12 @@ import math
 import numpy as np
 
 
-def errors(reference, prediction, sne_definition=None):
+def errors(reference, prediction, sne_definition="sse"):
+    """SNE z wykładu (slajd 41): sum((reference - prediction)**2), czyli SSE.
+
+    Sumujemy wszystkie piksele i kanały RGB, bez normalizacji i uśredniania.
+    None zachowano jako jawne pominięcie SNE dla starszych wywołań API.
+    """
     if reference.shape != prediction.shape:
         raise ValueError("Metryki wymagają jednakowych wymiarów.")
     if not np.isfinite(reference).all() or not np.isfinite(prediction).all():
@@ -16,18 +21,13 @@ def errors(reference, prediction, sne_definition=None):
               "PSNR": float("inf") if mse == 0 else -10 * math.log10(mse)}
     if sne_definition == "sse":
         result["SNE"] = sse
-    elif sne_definition == "mse":
-        result["SNE"] = mse
-    elif sne_definition == "relative-squared-error":
-        energy = float(np.square(reference.astype(np.float64)).sum())
-        result["SNE"] = sse / energy if energy else (0.0 if sse == 0 else float("inf"))
     elif sne_definition is not None:
-        raise ValueError(f"Nieznana definicja SNE: {sne_definition}")
+        raise ValueError("SNE z wykładu to suma kwadratów błędów (sse), bez normalizacji.")
     return result
 
 
 class Metrics:
-    def __init__(self, device="cpu", lpips_net="squeeze", skip_lpips=False, sne_definition=None):
+    def __init__(self, device="cpu", lpips_net="squeeze", skip_lpips=False, sne_definition="sse"):
         self.device = device
         self.sne_definition = sne_definition
         self.perceptual = None

@@ -268,7 +268,7 @@ def evaluate(args):
             "checkpoints": checkpoints, "lpips_net": None if args.skip_lpips else args.lpips_net,
             "sne_definition": args.sne_definition,
             "primary_metrics_complete": not args.skip_lpips,
-            "complete_metrics": not args.skip_lpips and args.sne_definition is not None,
+            "complete_metrics": not args.skip_lpips and args.sne_definition == "sse",
             "bilateral": tuned["parameters"] if tuned else "fixed: color_factor=2; spatial=3",
             "environment": environment(),
             "metric_protocol": "RGB [0,1]; full 256x256; mean per-image metrics; no border crop"}
@@ -297,7 +297,7 @@ def evaluate(args):
                            clean, base if task == "sr" else image, baseline, prediction,
                            condition, label)
             print(f"{condition}: {index + 1}/{len(paths)} {path.name}", flush=True)
-    # Ujednolicona kolejność kolumn, również gdy SNE nie jest zdefiniowane.
+    # Ujednolicona kolejność kolumn również dla starszego API pomijającego SNE.
     for row in rows:
         row.setdefault("SNE", None)
     write_csv(output / "per_image.csv", rows)

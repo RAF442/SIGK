@@ -12,18 +12,19 @@ Projekt realizuje **dwa zadania** z dostarczonego PDF w Pythonie i PyTorch:
 Kod obejmuje przygotowanie DIV2K, architekturę residualną, trening, wybór checkpointu,
 dobór parametrów bilateral, ewaluację, przetwarzanie własnego obrazu oraz raport
 HTML i Markdown z tabelami, wykresami i obrazami. **Kod i syntetyczna próba działania
-nie zastępują eksperymentów na DIV2K**. Stan wykonania opisuje [STATUS.md](STATUS.md).
+nie zastępują eksperymentów na DIV2K**. Wyniki i ograniczenia opisuje [docs/WYNIKI.md](docs/WYNIKI.md).
 
 Wykonano już pełną serię 4 modeli po 30 epok i ewaluację na 100 publicznych
 obrazach validation HR. Rzeczywiste tabele i interpretacja są w
 [docs/WYNIKI.md](docs/WYNIKI.md), a ilustracje w `runs/evaluation/raport.html`.
-Wzór SNE pozostaje do potwierdzenia; wartości tej metryki nie zostały zmyślone.
+SNE zweryfikowano ze slajdem 41 wykładu: jest to suma kwadratów błędów, czyli SSE.
+Kolumnę SNE uzupełniono z wcześniej zapisanych SSE, bez ponownego treningu.
 
 Po uporządkowaniu repozytorium zachowano końcowe modele `best.pt` i raport HTML.
 Usunięto katalog `runs/preliminary/`, cztery końcowe checkpointy `last.pt` oraz
 `runs/evaluation/raport.md`. Próby wstępne opisane w dokumentacji są nadal dostępne
 w historii Git, np. w commicie `5069b22`. Nowy trening ponownie tworzy `last.pt`,
-a generowanie raportu tworzy również wersję Markdown. Wznowienie treningu wymaga
+a `report --markdown` tworzy dodatkową wersję Markdown. Wznowienie treningu wymaga
 zachowanego lokalnie checkpointu `last.pt`; pliki `best.pt` wystarczają do predykcji.
 
 ## Instalacja (Windows / PowerShell)
@@ -33,7 +34,7 @@ Z katalogu projektu, z Pythonem 3.10 lub nowszym:
 ```powershell
 python -m venv .venv
 .venv/Scripts/python.exe -m pip install -r requirements.txt
-.venv/Scripts/python.exe -X utf8 -m sigk doctor
+.venv/Scripts/python.exe -X utf8 -m src doctor
 ```
 
 Nie trzeba aktywować środowiska. Dla karty NVIDIA można najpierw zainstalować
@@ -48,20 +49,25 @@ Przykład zgodnej pary z oficjalnego indeksu CUDA 12.8:
 Wynik `doctor` powinien pokazać nazwę GPU i wersję CUDA. Instalacja CPU również
 działa; `--device auto` automatycznie wybiera dostępne urządzenie.
 Komendy działają też na Linuxie po zastąpieniu `.venv/Scripts/python.exe` przez
-`.venv/bin/python`. Skrypty `.ps1` są przeznaczone dla Windows.
+`.venv/bin/python`. Pętle w poniższych przykładach są zapisane dla PowerShell.
 
 ## Szybka próba bez DIV2K
 
 ```powershell
 .venv/Scripts/python.exe -X utf8 -m unittest discover -s tests -v
-./scripts/smoke.ps1
+.venv/Scripts/python.exe -X utf8 -m src demo-data --data data/demo
+foreach ($condition in @("sr4", "sr8", "dn001", "dn003")) {
+    .venv/Scripts/python.exe -X utf8 -m src train --condition $condition --data data/demo --runs runs/smoke --epochs 2 --repeat 1 --width 8 --blocks 1 --batch-size 2 --device cpu
+    if ($LASTEXITCODE -ne 0) { throw "Trening $condition zakonczony bledem" }
+}
+.venv/Scripts/python.exe -X utf8 -m src evaluate --data data/demo --runs runs/smoke --output runs/smoke-evaluation --examples 2 --device cpu
 ```
 
-Skrypt tworzy 13 obrazów proceduralnych, trenuje cztery małe modele po dwie epoki
-i zapisuje raport w `runs/smoke-evaluation/raport.html`. Pierwsze użycie LPIPS
-pobiera wagi SqueezeNet (ok. 5 MB). `./scripts/smoke.ps1 -SkipLpips` pomija ten
-download i wyraźnie oznacza niekompletne metryki. Skrypt wymaga pustych katalogów
-`data/demo`, `runs/smoke` i `runs/smoke-evaluation`; nie nadpisuje wcześniejszych prób.
+Polecenia tworzą 13 obrazów proceduralnych, trenują cztery małe modele po dwie epoki
+i zapisują raport w `runs/smoke-evaluation/raport.html`. Pierwsze użycie LPIPS
+pobiera wagi SqueezeNet (ok. 5 MB). Dodanie `--skip-lpips` do komendy `evaluate`
+pomija ten download i wyraźnie oznacza niekompletne metryki. Potrzebne są puste
+katalogi `data/demo`, `runs/smoke` i `runs/smoke-evaluation`, aby nie nadpisać wcześniejszych prób.
 
 ## Pełny eksperyment DIV2K
 
@@ -69,16 +75,22 @@ Pobranie archiwów HR to około 3.9 GB. Rozpakowane źródła, środowisko CUDA,
 archiwa i wyniki wymagają orientacyjnie 15-20 GB miejsca.
 
 ```powershell
-.venv/Scripts/python.exe -X utf8 -m sigk download
-.venv/Scripts/python.exe -X utf8 -m sigk prepare
-.venv/Scripts/python.exe -X utf8 -m sigk verify
-./scripts/run_all.ps1 -Epochs 60 -Device auto
+.venv/Scripts/python.exe -X utf8 -m src download
+.venv/Scripts/python.exe -X utf8 -m src prepare
+.venv/Scripts/python.exe -X utf8 -m src verify
+
+foreach ($condition in @("sr4", "sr8", "dn001", "dn003")) {
+    .venv/Scripts/python.exe -X utf8 -m src train --condition $condition --runs runs/new --epochs 60 --device auto
+    if ($LASTEXITCODE -ne 0) { throw "Trening $condition zakonczony bledem" }
+}
+.venv/Scripts/python.exe -X utf8 -m src tune-baseline --output runs/new/bilateral.json
+.venv/Scripts/python.exe -X utf8 -m src evaluate --runs runs/new --output runs/new-evaluation --bilateral-config runs/new/bilateral.json
 ```
 
-Można też wykonać wszystko jednym skryptem: `./scripts/run_all.ps1 -Download`.
 Pobieranie jest jawne i nie uruchamia się przy `train` ani `evaluate`.
-Przerwanie treningu można wznowić przez `./scripts/run_all.ps1 -Resume` z tymi
-samymi parametrami. Zmiana parametrów wymaga nowego katalogu `-Runs` i `-Output`.
+Przerwany trening pojedynczego wariantu można wznowić, dodając `--resume`
+do jego komendy `train` z tymi samymi parametrami i zachowanym `last.pt`.
+Zmiana parametrów wymaga nowego katalogu `--runs` i `--output`.
 
 Domyślny plan eksperymentu to **60 epok na wariant**, Adam, MSE, learning rate
 0.001 z harmonogramem kosinusowym, batch 8, 32 kanały, 6 bloków residualnych.
@@ -86,19 +98,27 @@ Każdy obraz treningowy jest używany 4 razy na epokę, z rotacjami, odbiciami i
 nową realizacją szumu. To punkt startowy do eksperymentów, nie gwarancja poprawy
 względem baseline. Czas zależy od urządzenia; pierwsze epoki podają rzeczywisty czas.
 
-Seria wykonana w tym projekcie używa mniejszej sieci i następującej komendy:
+Seria wykonana w tym projekcie używa mniejszej sieci. Odtworzenie treningu
+w osobnym katalogu:
 
 ```powershell
-./scripts/run_all.ps1 -Epochs 30 -Width 24 -Blocks 4 -Repeat 2 -Device cuda -DenoisePrecision bf16
+foreach ($condition in @("sr4", "sr8", "dn001", "dn003")) {
+    $precision = if ($condition.StartsWith("dn")) { "bf16" } else { "fp32" }
+    .venv/Scripts/python.exe -X utf8 -m src train --condition $condition --runs runs/reproduction --epochs 30 --width 24 --blocks 4 --repeat 2 --device cuda --precision $precision
+    if ($LASTEXITCODE -ne 0) { throw "Trening $condition zakonczony bledem" }
+}
+.venv/Scripts/python.exe -X utf8 -m src tune-baseline --output runs/reproduction/bilateral.json
+.venv/Scripts/python.exe -X utf8 -m src evaluate --runs runs/reproduction --output runs/reproduction-evaluation --bilateral-config runs/reproduction/bilateral.json
 ```
 
-Dokładny stan zakończenia i wyniki: [STATUS.md](STATUS.md). Do wznowienia tej
-konkretnej serii należy dodać `-Resume` do powyższej komendy. Odtworzenie od zera
-wymaga nowego `-Runs` i `-Output`, aby zachować istniejące wyniki.
+Dokładne wyniki: [docs/WYNIKI.md](docs/WYNIKI.md). Do wznowienia
+przerwanego wariantu należy użyć jego komendy `train` z `--resume` i identycznymi
+parametrami. Odtworzenie od zera wymaga pustych katalogów `--runs` i `--output`,
+aby zachować istniejące wyniki.
 Plik `requirements-lock.txt` zawiera wersje zainstalowanego środowiska Windows/CUDA.
 W tej serii SR używa FP32, a trening odszumiania BF16 (autocast, parametry i
 optymalizator FP32). Walidacja, końcowe predykcje i metryki używają FP32.
-BF16 wymaga zgodnej karty CUDA; dla CPU należy pominąć `-DenoisePrecision bf16`.
+BF16 wymaga zgodnej karty CUDA; dla CPU należy użyć `--device cpu --precision fp32`.
 W treningu odszumiania `--training-noise auto` generuje szum bezpośrednio
 w PyTorch na GPU (osobny generator z seed zależnym od epoki). Na CPU domyślnie
 używa NumPy. `--training-noise numpy` pozwala wymusić generator CPU.
@@ -125,7 +145,7 @@ oficjalnym testem DIV2K. Aby spełnić dosłownie wymóg testu z PDF, trzeba otr
 testowe referencje HR i przygotować nowy zbiór:
 
 ```powershell
-.venv/Scripts/python.exe -m sigk prepare --test-dir C:/sciezka/DIV2K_test_HR --data data/div2k-official
+.venv/Scripts/python.exe -m src prepare --test-dir C:/sciezka/DIV2K_test_HR --data data/div2k-official
 ```
 
 Parametr `--test-dir` przyjmuje wszystkie obrazy PNG z katalogu. Przygotowanie
@@ -143,39 +163,43 @@ dla nazwy obrazu, wariantu i ziarna; każda metoda dostaje identyczne wejście.
 
 ```powershell
 # Jeden model; pozostałe warianty: sr8, dn001, dn003
-.venv/Scripts/python.exe -m sigk train --condition sr4 --epochs 60 --device auto
+.venv/Scripts/python.exe -m src train --condition sr4 --epochs 60 --device auto
 
 # Wznowienie przerwanego treningu (identyczna konfiguracja)
-.venv/Scripts/python.exe -m sigk train --condition sr4 --epochs 60 --resume
+.venv/Scripts/python.exe -m src train --condition sr4 --epochs 60 --resume
 
 # Porównawczy eksperyment L1 zamiast MSE, w osobnym katalogu
-.venv/Scripts/python.exe -m sigk train --condition sr4 --loss l1 --runs runs/ablation-l1
+.venv/Scripts/python.exe -m src train --condition sr4 --loss l1 --runs runs/ablation-l1
 
 # Dobór baseline odszumiania na wewnętrznym val
-.venv/Scripts/python.exe -m sigk tune-baseline
+.venv/Scripts/python.exe -m src tune-baseline
 
-# Wszystkie obrazy testowe, wszystkie 4 warianty i komplet metryk poza niezdefiniowanym SNE
-.venv/Scripts/python.exe -m sigk evaluate --bilateral-config runs/main/bilateral.json
+# Wszystkie obrazy testowe, wszystkie 4 warianty i komplet metryk z SNE=SSE
+.venv/Scripts/python.exe -m src evaluate --bilateral-config runs/main/bilateral.json
 
-# Raport z zapisanych wyników (bez ponownego liczenia metryk)
-.venv/Scripts/python.exe -m sigk report
+# Raport HTML z zapisanych wyników (bez ponownego liczenia metryk)
+.venv/Scripts/python.exe -m src report
+
+# Opcjonalna, dodatkowa wersja Markdown
+.venv/Scripts/python.exe -m src report --markdown
 
 # Własne już zdegradowane wejścia: 64x64 dla sr4 albo 256x256 dla denoising
-.venv/Scripts/python.exe -m sigk predict --checkpoint runs/main/sr4/best.pt --input examples/input_sr4.png --output restored256.png
+.venv/Scripts/python.exe -m src predict --checkpoint runs/main/sr4/best.pt --input examples/input_sr4.png --output restored256.png
 ```
 
 `evaluate --conditions sr4` pozwala ocenić pojedynczy wariant, a `--limit 5`
 sprawdza krótki przebieg. **Do końcowych wyników nie używać `--limit` ani
 `--skip-lpips`**. Wyniki trafiają do nowego, pustego katalogu `--output`.
 
-Po zakończeniu głównej ewaluacji można utworzyć archiwum do przekazania:
-`.venv/Scripts/python.exe scripts/package_project.py`. Powstanie
-`output/SIGK_projekt.zip` ze źródłami, checkpointami i wynikami, bez surowego
-DIV2K i środowiska `.venv`. Raport i `predict` można uruchamiać z archiwum
-po zainstalowaniu zależności; ponowny trening wymaga osobnego przygotowania danych.
-Przykłady w `examples/` zawierają gotowe wejścia i wyniki z jednego obrazu
-walidacyjnego. Odtworzenie przykładów po treningu:
-`.venv/Scripts/python.exe scripts/make_examples.py`.
+Archiwum `output/SIGK_projekt.zip` zawiera źródła, checkpointy, przykłady i wyniki,
+bez surowego DIV2K i środowiska `.venv`. Aby przygotować nowe archiwum ręcznie,
+spakuj katalogi `sigk`, `tests`, `docs`, `examples`, `runs/main`, `runs/evaluation`
+oraz pliki z katalogu głównego. Pomiń `__pycache__`, `.git`, `.venv`, `.cache`,
+`data`, `tmp`, `.idea` i sam katalog `output`.
+Raport i `predict` można uruchamiać po rozpakowaniu i zainstalowaniu zależności;
+ponowny trening wymaga osobnego przygotowania danych. Gotowe wejścia i wyniki
+z jednego obrazu walidacyjnego są w `examples/`. Nowe wyniki dla tych wejść
+można uzyskać komendą `predict`, opisaną również w `examples/README.md`.
 
 ## Metryki i wyniki
 
@@ -184,18 +208,26 @@ brzegów. Wynikiem zbiorczym jest średnia arytmetyczna wyników każdego obrazu
 a nie PSNR obliczone z uśrednionego MSE.
 
 - MSE = suma kwadratów błędu / (H * W * 3).
-- SSE = suma kwadratów błędu; dodatkowa jawnie nazwana metryka.
+- SNE = SSE = suma kwadratów błędu po wszystkich pikselach i kanałach RGB.
 - PSNR = -10 log10(MSE); dla identycznych obrazów wynosi +inf.
 - SSIM: skimage, RGB, okno Gaussa, sigma=1.5, `data_range=1`,
   `use_sample_covariance=False`.
 - LPIPS: pretrained SqueezeNet, LPIPS v0.1, wejście RGB [-1,1], tryb `eval()`.
   `--lpips-net alex` / `vgg` zmienia backbone i pobiera większe wagi. Nie należy
   porównywać bezpośrednio wartości LPIPS uzyskanych z różnymi backbone'ami.
-- **SNE: w PDF nie ma wzoru.** Domyślnie kolumna ma `brak`; nie podstawiamy
-  niepotwierdzonej definicji. Po sprawdzeniu notatek można wybrać
-  `--sne-definition sse`, `mse` lub `relative-squared-error` (SSE / suma
-  kwadratów referencji). Jeżeli definicja wykładowa jest inna, należy dodać ją
-  w `sigk/metrics.py`. Wybrany wzór zapisuje się w metadanych i raporcie.
+- **SNE (Squared Norm Error)** zweryfikowano na podstawie slajdu 41 wykładu:
+  `sum((reference - prediction)**2)`, bez dzielenia przez liczbę wartości
+  ani przez energię obrazu referencyjnego. Dla RGB 256 x 256 zachodzi
+  `SNE = 256 * 256 * 3 * MSE`. Niższe SNE jest lepsze. Obrazy są w [0,1];
+  dla czarnej referencji nie występuje dzielenie przez zero.
+  Wariant `sse` jest domyślny i jedyny dopuszczony przez `--sne-definition`.
+  W CSV zachowano kolumnę `SSE` jako alias SNE. Istniejące wyniki uzupełniono
+  bez zmiany PSNR, SSIM, LPIPS, wag modeli i podziału danych.
+
+Starsze wyniki z tego eksperymentu zostały już jednorazowo uzupełnione z SSE.
+Kopia wcześniejszych plików znajduje się lokalnie w `tmp/sne_before_update/`.
+Nowa komenda `evaluate` od razu zapisuje poprawne SNE, a `report` odtwarza HTML
+z zapisanych wyników. Do dalszej pracy nie jest potrzebne osobne narzędzie migracji.
 
 LPIPS nigdy nie przechodzi po cichu na losowe wagi. Błąd pobierania wag przerywa
 ewaluację; `--skip-lpips` jest wyłącznie opcją do niepełnej próby technicznej.
@@ -211,7 +243,7 @@ runs/main/<wariant>/
 runs/main/bilateral.json  parametry baseline wybrane na val
 runs/evaluation/
   raport.html          raport do przeglądarki i wydruku
-  raport.md            wersja tekstowa
+  raport.md            opcjonalna wersja tekstowa (report --markdown)
   summary.csv/json     tabela dla wariantów i metod
   per_image.csv        metryki każdego obrazu
   metadata.json        protokół, seed, hashe modeli i danych, wersje bibliotek

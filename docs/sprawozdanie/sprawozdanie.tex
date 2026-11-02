@@ -137,7 +137,7 @@ Tabela~\ref{tab:wymagania} zestawia wymagania z instrukcji z miejscami, w który
     \toprule
     Wymaganie & Realizacja & Sekcja \\
     \midrule
-    Python + PyTorch & cały kod w pakiecie \code{sigk}, sieć i trening w PyTorch & \ref{sec:architektura}, \ref{sec:trening} \\
+    Python + PyTorch & cały kod w pakiecie \code{src}, sieć i trening w PyTorch & \ref{sec:architektura}, \ref{sec:trening} \\
     Własna architektura & \nazwa{}: sieć rezydualna w stylu EDSR & \ref{sec:architektura} \\
     2 z 4 zadań & zwiększanie rozdzielczości i odszumianie, po dwa warianty & \ref{sec:dane} \\
     DIV2K, obrazy $256\times256$ & wszystkie obrazy przeskalowane do $256\times256$ & \ref{sec:dane} \\
@@ -630,15 +630,15 @@ Instalacja: \code{python -m pip install -r requirements.txt} (Python $\geq$ 3.10
 \begin{center}\small
 \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
   \toprule
-  \code{python -m sigk download}, \code{prepare}, \code{verify} & pobranie DIV2K, przygotowanie $256\times256$, kontrola danych \\
-  \code{python -m sigk train --condition sr4} & trening jednego wariantu (\code{sr4}, \code{sr8}, \code{dn001}, \code{dn003}) \\
-  \code{python -m sigk tune-baseline} & strojenie filtru bilateralnego na walidacji \\
-  \code{python -m sigk evaluate --sne-definition sse ...} & pełna ewaluacja i raport HTML \\
-  \code{python -m sigk predict --checkpoint ... --input ...} & przetworzenie własnego obrazu \\
+  \code{python -m src download}, \code{prepare}, \code{verify} & pobranie DIV2K, przygotowanie $256\times256$, kontrola danych \\
+  \code{python -m src train --condition sr4} & trening jednego wariantu (\code{sr4}, \code{sr8}, \code{dn001}, \code{dn003}) \\
+  \code{python -m src tune-baseline} & strojenie filtru bilateralnego na walidacji \\
+  \code{python -m src evaluate --sne-definition sse ...} & pełna ewaluacja i raport HTML \\
+  \code{python -m src predict --checkpoint ... --input ...} & przetworzenie własnego obrazu \\
   \bottomrule
 \end{tabularx}
 \end{center}
-Pełny opis jest w \code{README.md}, a cały eksperyment odtwarza skrypt \code{scripts/run\_all.ps1}.
+Pełny opis i polecenia odtwarzające cały eksperyment znajdują się w \code{README.md}.
 Rysunki do tego sprawozdania generuje \code{docs/sprawozdanie/make\_figures.py}.
 
 % ---------------------------------------------------------------- dodatek

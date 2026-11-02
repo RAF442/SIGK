@@ -8,7 +8,7 @@ Wejścia input_sr4/input_sr8 mają rozmiary 64/32 px, a input_dn001/input_dn003 
 Przykładowa komenda z katalogu projektu:
 
 ```powershell
-.venv/Scripts/python.exe -m sigk predict --checkpoint runs/main/sr4/best.pt --input examples/input_sr4.png --output examples/my_result.png
+.venv/Scripts/python.exe -m src predict --checkpoint runs/main/sr4/best.pt --input examples/input_sr4.png --output examples/my_result.png
 ```
 
 Źródło i licencja akademicka: [DIV2K](https://data.vision.ee.ethz.ch/cvl/DIV2K/).

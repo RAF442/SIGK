@@ -41,9 +41,9 @@ z predykcji float, przed kwantyzacją do PNG.
 3. Wybierać najlepszy checkpoint według średniego PSNR wewnętrznego val.
 4. Dobrać bilateral na tym samym wewnętrznym val: sigma_color / sigma
    w {1,2,3}, sigma_spatial w {1,3}; użyć najlepszego średniego PSNR.
-5. Ustalić definicję SNE na podstawie wykładu i zapisać ją w konfiguracji ewaluacji.
+5. Stosować SNE ze slajdu 41 wykładu: sumę kwadratów błędów (SSE), bez normalizacji.
 6. Zamrozić parametry i ocenić wszystkie obrazy testu dla każdej metody.
-7. Sprawdzić PSNR, SSIM, LPIPS, mapy błędu i konkretne przykłady.
+7. Sprawdzić SNE, PSNR, SSIM, LPIPS, mapy błędu i konkretne przykłady.
 
 Bez doboru baseline program używa sigma_color=2*sigma, sigma_spatial=3,
 channel_axis=-1 i mode=reflect. W tabelach odszumiania pokazuje również
@@ -100,13 +100,13 @@ Raport oblicza rzeczywiste różnice i jawnie pokazuje brak poprawy.
 
 | Wymóg | Realizacja |
 | --- | --- |
-| Python i PyTorch | `sigk/models.py`, `sigk/engine.py` |
+| Python i PyTorch | `src/models.py`, `src/engine.py` |
 | dwa zadania, po dwa parametry | sr4, sr8, dn001, dn003 |
 | DIV2K i 256 x 256 | `download`, `prepare`, manifest SHA-256 |
 | interpolacja udokumentowana | INTER_AREA w redukcji, INTER_CUBIC w baseline |
 | odpowiednie metody bazowe | OpenCV bicubic i skimage bilateral |
-| PSNR, SSIM, LPIPS | `sigk/metrics.py`, pomiary każdego obrazu |
-| SNE | oczekuje definicji wykładowej; jawny wybór wzoru w CLI |
+| PSNR, SSIM, LPIPS | `src/metrics.py`, pomiary każdego obrazu |
+| SNE | zweryfikowana suma kwadratów błędów (SSE), slajd 41; domyślnie włączona |
 | cały zbiór testowy | domyślnie wszystkie obrazy podziału test; referencje oficjalnego testu trzeba uzyskać |
 | tabele z nazwą wariantu | summary.csv/json i raport HTML/Markdown |
 | wizualizacje i dokumentacja | obrazy, mapy błędu, krzywe treningu, wnioski z pomiarów |

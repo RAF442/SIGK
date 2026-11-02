@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-sigk = "sigk.cli:main"
+sigk = "src.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["sigk*"]
+include = ["src*"]

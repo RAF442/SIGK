@@ -9,9 +9,9 @@ from pathlib import Path
 
 import numpy as np
 
-from sigk.common import dump_json, image_seed, load_json
-from sigk.data import extract_archive, official_split
-from sigk.metrics import errors
+from src.common import dump_json, image_seed, load_json
+from src.data import extract_archive, official_split
+from src.metrics import errors
 
 HAS_TORCH = importlib.util.find_spec("torch") is not None
 HAS_CV2 = importlib.util.find_spec("cv2") is not None
@@ -49,13 +49,33 @@ class ProtocolTests(unittest.TestCase):
     def test_metrics_known_constant_error(self):
         reference = np.ones((8, 8, 3), np.float32) * 0.5
         prediction = reference + 0.1
-        result = errors(reference, prediction, "relative-squared-error")
+        result = errors(reference, prediction)
         self.assertAlmostEqual(result["PSNR"], 20, places=4)
         self.assertAlmostEqual(result["MSE"], 0.01, places=6)
         self.assertAlmostEqual(result["SSE"], 1.92, places=5)
-        self.assertAlmostEqual(result["SNE"], 0.04, places=6)
+        self.assertAlmostEqual(result["SNE"], 1.92, places=5)
+        self.assertAlmostEqual(result["SNE"], reference.size * result["MSE"])
         self.assertTrue(math.isinf(errors(reference, reference)["PSNR"]))
-        self.assertNotIn("SNE", errors(reference, prediction))
+        self.assertEqual(errors(reference, reference)["SNE"], 0.0)
+        self.assertNotIn("SNE", errors(reference, prediction, None))
+
+    def test_sne_black_reference_has_no_division_by_zero(self):
+        reference = np.zeros((2, 2, 3), np.float32)
+        prediction = np.full_like(reference, 0.25)
+        result = errors(reference, prediction)
+        self.assertEqual(result["SNE"], 0.75)
+        self.assertTrue(math.isfinite(result["SNE"]))
+        self.assertEqual(errors(reference, reference)["SNE"], 0.0)
+
+    def test_sne_rejects_definitions_inconsistent_with_lecture(self):
+        reference = np.zeros((2, 2, 3), np.float32)
+        for definition in ("mse", "relative-squared-error"):
+            with self.assertRaises(ValueError):
+                errors(reference, reference, definition)
+
+    def test_cli_defaults_to_lecture_sne(self):
+        from src.cli import parser
+        self.assertEqual(parser().parse_args(["evaluate"]).sne_definition, "sse")
 
     def test_metric_rejects_nonfinite(self):
         image = np.zeros((8, 8, 3), np.float32)
@@ -67,7 +87,7 @@ class ProtocolTests(unittest.TestCase):
 @unittest.skipUnless(HAS_CV2, "OpenCV nie jest zainstalowane")
 class DegradationTests(unittest.TestCase):
     def test_shapes_and_noise_statistics(self):
-        from sigk.data import fixed_degradation
+        from src.data import fixed_degradation
         clean = np.full((256, 256, 3), 0.5, np.float32)
         for condition, size in (("sr4", 64), ("sr8", 32)):
             low, base = fixed_degradation(clean, condition, 42, "a.png")
@@ -80,8 +100,8 @@ class DegradationTests(unittest.TestCase):
             self.assertAlmostEqual(float((noisy - clean).std()), sigma, delta=sigma * 0.01)
 
     def test_manifest_detects_tampering(self):
-        from sigk.data import verify_data
-        from sigk.demo import make_demo
+        from src.data import verify_data
+        from src.demo import make_demo
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "demo"
             make_demo(root)
@@ -97,7 +117,7 @@ class DegradationTests(unittest.TestCase):
 class LearningTests(unittest.TestCase):
     def test_shapes_gradient_and_learning(self):
         import torch
-        from sigk.models import Restorer
+        from src.models import Restorer
         torch.set_num_threads(2)
         for condition, size in (("sr4", 64), ("sr8", 32), ("dn001", 256), ("dn003", 256)):
             torch.manual_seed(7)
@@ -119,7 +139,7 @@ class LearningTests(unittest.TestCase):
 
     def test_checkpoint_roundtrip(self):
         import torch
-        from sigk.models import Restorer, load_model
+        from src.models import Restorer, load_model
         model = Restorer("sr4", width=4, blocks=1)
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "model.pt"
@@ -132,9 +152,9 @@ class LearningTests(unittest.TestCase):
     def test_finished_run_resume_restores_history(self):
         import torch
         from argparse import Namespace
-        from sigk.common import sha256
-        from sigk.demo import make_demo
-        from sigk.engine import train
+        from src.common import sha256
+        from src.demo import make_demo
+        from src.engine import train
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             data = root / "data"
@@ -161,7 +181,7 @@ class LearningTests(unittest.TestCase):
 @unittest.skipUnless(HAS_SKIMAGE, "scikit-image nie jest zainstalowane")
 class StructuralTests(unittest.TestCase):
     def test_identity_ssim(self):
-        from sigk.metrics import Metrics
+        from src.metrics import Metrics
         image = np.random.default_rng(1).random((32, 32, 3), dtype=np.float32)
         result = Metrics(skip_lpips=True)(image, image)
         self.assertAlmostEqual(result["SSIM"], 1.0)

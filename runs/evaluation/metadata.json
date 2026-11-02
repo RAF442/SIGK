@@ -111,9 +111,9 @@
     }
   },
   "lpips_net": "squeeze",
-  "sne_definition": null,
+  "sne_definition": "sse",
   "primary_metrics_complete": true,
-  "complete_metrics": false,
+  "complete_metrics": true,
   "bilateral": {
     "dn001": {
       "color_factor": 1.0,
@@ -136,5 +136,11 @@
     "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
     "cuda": "12.8"
   },
-  "metric_protocol": "RGB [0,1]; full 256x256; mean per-image metrics; no border crop"
+  "metric_protocol": "RGB [0,1]; full 256x256; mean per-image metrics; no border crop",
+  "sne_verification": {
+    "source": "Slajd 41 wykładu: SNE (Squared Norm Error), dostarczony przez użytkownika",
+    "formula": "sum((reference - prediction)**2)",
+    "scope": "suma po wszystkich pikselach i kanałach RGB [0,1]",
+    "update": "SNE uzupełniono z istniejących SSE; bez treningu i ponownej predykcji"
+  }
 }
