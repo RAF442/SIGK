@@ -19,6 +19,13 @@ obrazach validation HR. Rzeczywiste tabele i interpretacja są w
 [docs/WYNIKI.md](docs/WYNIKI.md), a ilustracje w `runs/evaluation/raport.html`.
 Wzór SNE pozostaje do potwierdzenia; wartości tej metryki nie zostały zmyślone.
 
+Po uporządkowaniu repozytorium zachowano końcowe modele `best.pt` i raport HTML.
+Usunięto katalog `runs/preliminary/`, cztery końcowe checkpointy `last.pt` oraz
+`runs/evaluation/raport.md`. Próby wstępne opisane w dokumentacji są nadal dostępne
+w historii Git, np. w commicie `5069b22`. Nowy trening ponownie tworzy `last.pt`,
+a generowanie raportu tworzy również wersję Markdown. Wznowienie treningu wymaga
+zachowanego lokalnie checkpointu `last.pt`; pliki `best.pt` wystarczają do predykcji.
+
 ## Instalacja (Windows / PowerShell)
 
 Z katalogu projektu, z Pythonem 3.10 lub nowszym:
