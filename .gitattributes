@@ -1,0 +1,3 @@
+# Experiment signatures hash the exact source and CSV bytes.
+*.py -text
+*.csv -text
